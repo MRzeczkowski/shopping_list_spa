@@ -28,12 +28,7 @@ public class ShoppingListController : ControllerBase
             var productsCollection = GetProductsCollection();
             var productsModels = productsCollection.Find(product => true).ToList();
 
-            var products = productsModels.Select(m => new Product
-            {
-                Id = m.Id.ToString(),
-                Name = m.Name,
-                IsPurchased = m.IsPurchased
-            }).ToList();
+            var products = productsModels.Select(MapProductModel).ToList();
 
             return Ok(products);
         }
@@ -43,6 +38,14 @@ public class ShoppingListController : ControllerBase
             return StatusCode(500, "An error occurred while fetching the products.");
         }
     }
+
+    private static Product MapProductModel(ProductModel model) =>
+        new()
+        {
+            Id = model.Id.ToString(),
+            Name = model.Name,
+            IsPurchased = model.IsPurchased
+        };
 
     [HttpPost("{productName}")]
     public IActionResult Post(string productName)
@@ -63,7 +66,10 @@ public class ShoppingListController : ControllerBase
                 var productsCollection = GetProductsCollection();
                 productsCollection.InsertOne(newProduct);
                 _logger.LogInformation("Product created successfully: {ProductName}", productName);
-                return CreatedAtAction(nameof(Get), new { id = newProduct.Id }, newProduct);
+
+                var product = MapProductModel(newProduct);
+
+                return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
             }
             catch (Exception ex)
             {
