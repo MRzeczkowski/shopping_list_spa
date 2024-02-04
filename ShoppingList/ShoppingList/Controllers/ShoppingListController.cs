@@ -16,8 +16,6 @@ public class ShoppingListController : ControllerBase
     {
         _logger = logger;
         _configuration = configuration;
-
-        EnsureMongoConnection();
     }
 
     [HttpGet]
@@ -28,7 +26,15 @@ public class ShoppingListController : ControllerBase
         try
         {
             var productsCollection = GetProductsCollection();
-            var products = productsCollection.Find(product => true).ToList();
+            var productsModels = productsCollection.Find(product => true).ToList();
+
+            var products = productsModels.Select(m => new Product
+            {
+                Id = m.Id.ToString(),
+                Name = m.Name,
+                IsPurchased = m.IsPurchased
+            }).ToList();
+
             return Ok(products);
         }
         catch (Exception ex)
@@ -38,8 +44,8 @@ public class ShoppingListController : ControllerBase
         }
     }
 
-    [HttpPost]
-    public IActionResult Post([FromBody] string productName)
+    [HttpPost("{productName}")]
+    public IActionResult Post(string productName)
     {
         EnsureMongoConnection();
 
@@ -47,7 +53,7 @@ public class ShoppingListController : ControllerBase
         {
             try
             {
-                var newProduct = new Product
+                var newProduct = new ProductModel
                 {
                     Id = ObjectId.GenerateNewId(),
                     Name = productName,
@@ -72,15 +78,15 @@ public class ShoppingListController : ControllerBase
         }
     }
 
-    [HttpPut("{id}")]
-    public IActionResult Put(string id, [FromBody] bool isPurchased)
+    [HttpPut("{id}/{isPurchased:bool}")]
+    public IActionResult Put(string id, bool isPurchased)
     {
         EnsureMongoConnection();
 
         try
         {
-            var filter = Builders<Product>.Filter.Eq(p => p.Id, new ObjectId(id));
-            var update = Builders<Product>.Update.Set(p => p.IsPurchased, isPurchased);
+            var filter = Builders<ProductModel>.Filter.Eq(p => p.Id, new ObjectId(id));
+            var update = Builders<ProductModel>.Update.Set(p => p.IsPurchased, isPurchased);
 
             var productsCollection = GetProductsCollection();
             productsCollection.UpdateOne(filter, update);
@@ -138,6 +144,6 @@ public class ShoppingListController : ControllerBase
         }
     }
 
-    private IMongoCollection<Product> GetProductsCollection() =>
-        _database!.GetCollection<Product>(_configuration.GetSection("MongoDB")["CollectionName"]);
+    private IMongoCollection<ProductModel> GetProductsCollection() =>
+        _database!.GetCollection<ProductModel>(_configuration.GetSection("MongoDB")["CollectionName"]);
 }
