@@ -10,9 +10,6 @@ export class Home extends Component {
             loading: true,
             newProductName: ''
         };
-
-        this.renderProductsTable = this.renderProductsTable.bind(this);
-        this.handlePurchasedChange = this.handlePurchasedChange.bind(this);
     }
 
     componentDidMount() {
@@ -50,7 +47,7 @@ export class Home extends Component {
         );
     }
 
-    renderProductsTable(products) {
+    renderProductsTable = (products) => {
         return (
             <table className="table table-striped" aria-labelledby="tableLabel">
                 <thead>
@@ -81,8 +78,8 @@ export class Home extends Component {
             </table>
         );
     }
-
-    async handlePurchasedChange(id, isPurchased) {
+    
+    handlePurchasedChange = async (id, isPurchased) => {
         try {
             const response = await fetch(`/ShoppingList/${id}/${isPurchased}`, {
                 method: 'PUT'
@@ -124,7 +121,7 @@ export class Home extends Component {
             console.error('Failed to delete the product:', error);
         }
     };
-    
+
     handleAddProduct = async () => {
         const {newProductName} = this.state;
         if (!newProductName) {
